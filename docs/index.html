@@ -503,8 +503,12 @@ a{color:var(--accent-2)}
     $('#urlInput').value = '';
     addUrls(raw);
   });
-  $('#urlInput').addEventListener('paste', function () {
-    setTimeout(function () { var f = $('#addForm'); if (f.requestSubmit) f.requestSubmit(); else f.dispatchEvent(new Event('submit', { cancelable: true })); }, 60);
+  function submitForm(f) { if (f.requestSubmit) f.requestSubmit(); else f.dispatchEvent(new Event('submit', { cancelable: true })); }
+  $('#urlInput').addEventListener('paste', function () { setTimeout(function () { submitForm($('#addForm')); }, 60); });
+  // Enter também envia (garantia extra para teclados de celular e navegadores diferentes)
+  $('#urlInput').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); submitForm($('#addForm')); } });
+  ['#pinInput', '#pinConfirm'].forEach(function (s) {
+    $(s).addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); submitForm($('#authForm')); } });
   });
 
   $('#statusSeg').addEventListener('click', function (e) {
