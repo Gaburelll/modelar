@@ -452,8 +452,31 @@ a{color:var(--accent-2)}
     $('#grid').hidden = view !== 'grid' || videos.length === 0;
     $('#list').hidden = view !== 'list' || videos.length === 0;
     $('#viewToggle').textContent = view === 'grid' ? '☰ Lista' : '▦ Galeria';
-    if (view === 'grid') $('#grid').innerHTML = items.map(cardHTML).join('') || '<p class="muted" style="grid-column:1/-1">Nada encontrado com esse filtro.</p>';
+    if (view === 'grid') renderGrid(items);
     else $('#list').innerHTML = items.length ? ('<table><thead><tr><th></th><th>Título</th><th>Plataforma</th><th>Status</th><th>Adicionado</th></tr></thead><tbody>' + items.map(rowHTML).join('') + '</tbody></table>') : '<p class="muted">Nada encontrado com esse filtro.</p>';
+  }
+
+  // Reaproveita os cartões que não mudaram (evita recarregar as capas a cada atualização)
+  function sig(v) { return JSON.stringify([v.pending, v.thumb_url, v.title, v.author, v.notes, v.tags, v.status, v.platform, v.thumb_w, v.thumb_h]); }
+  function renderGrid(items) {
+    var grid = $('#grid');
+    var existing = {};
+    $$('.card[data-id]', grid).forEach(function (el) { existing[el.dataset.id] = el; });
+    var frag = document.createDocumentFragment();
+    items.forEach(function (v) {
+      var el = existing[v.id];
+      var s = sig(v);
+      if (!el || el.dataset.sig !== s) {
+        var tmp = document.createElement('div');
+        tmp.innerHTML = cardHTML(v);
+        el = tmp.firstElementChild;
+        el.dataset.sig = s;
+      }
+      frag.appendChild(el);
+    });
+    grid.innerHTML = '';
+    if (!items.length) { grid.innerHTML = '<p class="muted" style="grid-column:1/-1">Nada encontrado com esse filtro.</p>'; return; }
+    grid.appendChild(frag);
   }
 
   function renderChips() {
