@@ -1,0 +1,620 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Vídeos para modelar</title>
+<meta name="description" content="Guarde links de vídeos com a capa para modelar depois.">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0e0f13">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Modelar">
+<meta name="api-base" content="https://fbmtuwnakzzfdyemlhcg.supabase.co/functions/v1/videos/">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{
+  --bg:#0e0f13; --surface:#161821; --surface-2:#1d2030; --border:#282c3b; --text:#eef0f6; --muted:#8e95a9;
+  --accent:#8b5cf6; --accent-2:#a78bfa; --amber:#f59e0b; --green:#22c55e; --red:#ef4444;
+  --radius:14px; --shadow:0 10px 30px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased;min-height:100%}
+body{padding-bottom:env(safe-area-inset-bottom)}
+button,input,textarea,select{font:inherit;color:inherit}
+a{color:var(--accent-2)}
+[hidden]{display:none!important}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.error{color:#fca5a5;font-size:14px}
+
+/* ---------- botões ---------- */
+.btn,.primary,.icon-btn{border:1px solid var(--border);background:var(--surface-2);border-radius:10px;padding:10px 14px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;transition:background .15s,border-color .15s,transform .05s;white-space:nowrap}
+.btn:hover,.icon-btn:hover{background:#252938;border-color:#353a4d}
+.btn:active,.primary:active,.icon-btn:active{transform:scale(.98)}
+.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.primary:hover{background:#7c4ff0}
+.primary[disabled],.btn[disabled]{opacity:.55;cursor:default}
+.icon-btn{padding:8px 10px;line-height:1}
+.btn.danger{color:#fca5a5;border-color:#4b2430;background:#2a1720}
+.btn.danger:hover{background:#3a1a27}
+
+/* ---------- tela de PIN ---------- */
+.screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+.auth-card{width:100%;max-width:380px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px 24px;box-shadow:var(--shadow);text-align:center}
+.logo-big{width:64px;height:64px;border-radius:18px;background:linear-gradient(135deg,var(--accent),#ec4899);display:inline-flex;align-items:center;justify-content:center;font-size:28px;color:#fff;margin-bottom:14px}
+.auth-card h1{font-size:22px;margin:0 0 6px}
+.auth-card p{margin:0 0 18px}
+.auth-card form{display:flex;flex-direction:column;gap:10px}
+.auth-card input{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-size:18px;letter-spacing:.2em;text-align:center;outline:none}
+.auth-card input:focus{border-color:var(--accent)}
+
+/* ---------- cabeçalho ---------- */
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px 6px;max-width:1200px;margin:0 auto}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.brand .logo{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#ec4899);display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:15px;flex:none}
+.brand h1{font-size:18px;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.top-actions{display:flex;gap:8px;flex:none}
+
+/* ---------- barra de adicionar ---------- */
+.addbar{position:sticky;top:0;z-index:5;background:linear-gradient(var(--bg) 85%,transparent);padding:8px 16px 10px;max-width:1200px;margin:0 auto}
+.addbar form{display:flex;gap:8px}
+.addbar input{flex:1;min-width:0;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:13px 14px;font-size:16px;outline:none}
+.addbar input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(139,92,246,.2)}
+.hint{margin:6px 2px 0;font-size:13px;color:var(--muted)}
+
+/* ---------- filtros ---------- */
+.filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:4px 16px 8px;max-width:1200px;margin:0 auto}
+.seg{display:inline-flex;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:3px;gap:2px}
+.seg button{border:0;background:transparent;border-radius:8px;padding:7px 11px;cursor:pointer;color:var(--muted);font-size:14px}
+.seg button.active{background:var(--surface-2);color:var(--text);font-weight:600}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--border);background:var(--surface);border-radius:999px;padding:6px 11px;font-size:13px;cursor:pointer;color:var(--muted)}
+.chip.active{border-color:var(--accent);color:var(--text);background:rgba(139,92,246,.15)}
+.filters .search{margin-left:auto;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 12px;min-width:140px;outline:none}
+.filters .search:focus{border-color:var(--accent)}
+.count{max-width:1200px;margin:0 auto;padding:0 16px 8px;font-size:13px;color:var(--muted)}
+
+/* ---------- galeria ---------- */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;padding:0 16px 24px;max-width:1200px;margin:0 auto}
+@media(min-width:640px){.grid{grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px}}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;cursor:pointer;display:flex;flex-direction:column;transition:transform .12s,border-color .12s}
+.card:hover{transform:translateY(-2px);border-color:#3a3f55}
+.card.pending{cursor:default}
+.thumb{position:relative;aspect-ratio:9/16;background:var(--surface-2);overflow:hidden}
+.thumb.landscape{aspect-ratio:16/9}
+.thumb.square{aspect-ratio:1/1}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb .ph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--muted);font-size:13px}
+.thumb .ph .big{font-size:34px}
+.badge{position:absolute;left:8px;top:8px;font-size:11px;font-weight:700;letter-spacing:.02em;padding:4px 8px;border-radius:999px;background:rgba(0,0,0,.65);color:#fff;backdrop-filter:blur(6px)}
+.badge.tiktok{background:rgba(0,0,0,.75);box-shadow:inset 0 0 0 1px #25f4ee55}
+.badge.instagram{background:linear-gradient(45deg,#f9a62b,#e1306c,#8134af)}
+.badge.youtube{background:#e11d2f}
+.badge.facebook{background:#1877f2}
+.badge.kwai{background:#ff7a00}
+.pill{position:absolute;right:8px;bottom:8px;border:0;border-radius:999px;padding:5px 9px;font-size:11px;font-weight:700;cursor:pointer;color:#111;background:var(--amber)}
+.pill.modelado{background:var(--green)}
+.card .body{padding:10px 11px 12px;display:flex;flex-direction:column;gap:4px;min-height:64px}
+.card .title{font-size:14px;font-weight:600;margin:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.3}
+.card .author{font-size:12px;color:var(--muted);margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card .notes{font-size:12px;color:var(--muted);margin:2px 0 0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.tag{font-size:11px;background:rgba(139,92,246,.15);color:var(--accent-2);border-radius:6px;padding:2px 6px}
+.skeleton{background:linear-gradient(90deg,var(--surface-2) 25%,#262a3a 50%,var(--surface-2) 75%);background-size:200% 100%;animation:shimmer 1.2s infinite}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.spin{width:22px;height:22px;border:3px solid #3a3f55;border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ---------- lista ---------- */
+.list{padding:0 16px 24px;max-width:1200px;margin:0 auto;overflow-x:auto}
+.list table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;min-width:560px}
+.list th{font-size:12px;color:var(--muted);text-align:left;padding:10px 12px;border-bottom:1px solid var(--border);font-weight:600}
+.list td{padding:8px 12px;border-bottom:1px solid var(--border);vertical-align:middle;font-size:14px}
+.list tr:last-child td{border-bottom:0}
+.list tr.row{cursor:pointer}
+.list tr.row:hover td{background:var(--surface-2)}
+.list .mini{width:44px;height:58px;border-radius:6px;object-fit:cover;background:var(--surface-2);display:block}
+.list .mini.ph{display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:18px}
+.list .pill{position:static}
+.list .t{font-weight:600;max-width:360px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.list .a{color:var(--muted);font-size:12px}
+
+/* ---------- vazio / rodapé ---------- */
+.empty{max-width:520px;margin:30px auto;text-align:center;padding:30px 20px;border:1px dashed var(--border);border-radius:var(--radius);color:var(--muted)}
+.empty .big{font-size:42px;margin-bottom:8px}
+.empty h2{color:var(--text);font-size:18px;margin:0 0 6px}
+.empty p{margin:4px 0}
+.foot{max-width:1200px;margin:0 auto;padding:8px 16px 28px;font-size:12px;color:var(--muted);text-align:center}
+
+/* ---------- modal ---------- */
+.modal{position:fixed;inset:0;z-index:20;display:flex;align-items:flex-end;justify-content:center}
+.modal-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(2px)}
+.sheet{position:relative;width:100%;max-width:640px;max-height:92vh;background:var(--surface);border:1px solid var(--border);border-radius:20px 20px 0 0;display:flex;flex-direction:column;box-shadow:var(--shadow);animation:up .18s ease-out}
+@keyframes up{from{transform:translateY(30px);opacity:.6}to{transform:none;opacity:1}}
+@media(min-width:700px){.modal{align-items:center;padding:20px}.sheet{border-radius:20px;max-height:88vh}}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--border)}
+.sheet-head .badge{position:static}
+.sheet-body{overflow:auto;padding:14px;display:flex;flex-direction:column;gap:12px}
+.sheet-thumb{width:100%;max-height:46vh;display:flex;justify-content:center;background:var(--surface-2);border-radius:12px;overflow:hidden}
+.sheet-thumb img{max-height:46vh;max-width:100%;object-fit:contain;display:block}
+.sheet-thumb .ph{padding:40px;color:var(--muted);text-align:center}
+.sheet label{display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--muted)}
+.sheet input[type=text],.sheet textarea{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:15px;color:var(--text);outline:none;width:100%;resize:vertical}
+.sheet input[type=text]:focus,.sheet textarea:focus{border-color:var(--accent)}
+.sheet-actions{display:flex;flex-wrap:wrap;gap:8px;padding-top:4px}
+.sheet .seg{align-self:flex-start}
+
+/* ---------- toasts ---------- */
+#toasts{position:fixed;left:0;right:0;bottom:calc(16px + env(safe-area-inset-bottom));display:flex;flex-direction:column;align-items:center;gap:8px;z-index:50;pointer-events:none}
+.toast{background:#23273a;border:1px solid var(--border);color:var(--text);padding:10px 14px;border-radius:12px;font-size:14px;box-shadow:var(--shadow);opacity:0;transform:translateY(8px);transition:.25s;max-width:92vw;text-align:center}
+.toast.show{opacity:1;transform:none}
+.toast.error{border-color:#7f1d1d;background:#3b1414}
+.toast.warn{border-color:#78350f;background:#3a2410}
+.toast.ok{border-color:#14532d;background:#123421}
+</style>
+</head>
+<body>
+
+<div id="auth" class="screen" hidden>
+  <div class="auth-card">
+    <div class="logo-big">▶</div>
+    <h1 id="authTitle">Digite seu PIN</h1>
+    <p id="authText" class="muted">Ele protege seus vídeos. Você só digita uma vez em cada aparelho.</p>
+    <form id="authForm">
+      <input id="pinInput" type="password" inputmode="numeric" pattern="[0-9]*" placeholder="PIN (4 a 8 números)" autocomplete="current-password" maxlength="8" required>
+      <input id="pinConfirm" type="password" inputmode="numeric" pattern="[0-9]*" placeholder="Repita o PIN" autocomplete="new-password" maxlength="8" hidden>
+      <button class="primary" type="submit" id="authBtn">Entrar</button>
+    </form>
+    <p id="authError" class="error" hidden></p>
+  </div>
+</div>
+
+<div id="app" hidden>
+  <header class="top">
+    <div class="brand"><span class="logo">▶</span><h1>Vídeos para modelar</h1></div>
+    <div class="top-actions">
+      <button id="viewToggle" class="icon-btn" title="Alternar galeria / lista">☰ Lista</button>
+      <button id="logout" class="icon-btn" title="Sair deste aparelho">Sair</button>
+    </div>
+  </header>
+
+  <section class="addbar">
+    <form id="addForm" autocomplete="off">
+      <input id="urlInput" type="text" inputmode="url" placeholder="Cole aqui o link do vídeo (TikTok, Instagram, YouTube…)" enterkeyhint="go">
+      <button type="submit" class="primary" id="addBtn">Adicionar</button>
+    </form>
+    <p class="hint">Ao colar o link, o vídeo é salvo e a capa aparece sozinha.</p>
+  </section>
+
+  <section class="filters">
+    <div class="seg" id="statusSeg">
+      <button type="button" data-status="all" class="active">Todos</button>
+      <button type="button" data-status="para_modelar">Para modelar</button>
+      <button type="button" data-status="modelado">Modelados</button>
+    </div>
+    <div class="chips" id="platformChips"></div>
+    <input id="search" class="search" type="search" placeholder="Buscar…">
+  </section>
+  <p class="count" id="count"></p>
+
+  <main id="grid" class="grid"></main>
+  <main id="list" class="list" hidden></main>
+  <div id="empty" class="empty" hidden>
+    <div class="big">🎬</div>
+    <h2>Nenhum vídeo ainda</h2>
+    <p>Cole um link lá em cima para começar.</p>
+    <p class="small">Funciona com TikTok, Instagram, YouTube e a maioria dos sites.</p>
+  </div>
+  <footer class="foot">Dica: no celular, toque em "Compartilhar" e depois em "Adicionar à Tela de Início" para abrir como aplicativo.</footer>
+</div>
+
+<div id="modal" class="modal" hidden>
+  <div class="modal-backdrop" data-close></div>
+  <div class="sheet" role="dialog" aria-modal="true" aria-label="Detalhes do vídeo">
+    <div class="sheet-head">
+      <span id="mPlatform" class="badge"></span>
+      <button type="button" class="icon-btn" data-close aria-label="Fechar">✕</button>
+    </div>
+    <div class="sheet-body">
+      <div class="sheet-thumb" id="mThumb"></div>
+      <label>Título<input id="mTitle" type="text" placeholder="Dê um nome para lembrar depois"></label>
+      <label>Status
+        <div class="seg" id="mStatus">
+          <button type="button" data-status="para_modelar">Para modelar</button>
+          <button type="button" data-status="modelado">Modelado</button>
+        </div>
+      </label>
+      <label>Etiquetas (separe por vírgula)<input id="mTags" type="text" placeholder="ex: notícia, curiosidade, humor"></label>
+      <label>Anotações<textarea id="mNotes" rows="4" placeholder="O que você quer copiar desse vídeo? Gancho, formato, trilha, legenda…"></textarea></label>
+      <p class="muted small" id="mMeta"></p>
+      <div class="sheet-actions">
+        <a id="mOpen" class="btn" target="_blank" rel="noopener">Abrir vídeo ↗</a>
+        <button type="button" class="btn" id="mRefresh">Atualizar capa</button>
+        <button type="button" class="btn" id="mCoverFile">Trocar capa…</button>
+        <button type="button" class="btn" id="mCoverUrl">Capa por link</button>
+        <button type="button" class="btn danger" id="mDelete">Excluir</button>
+      </div>
+      <input id="coverInput" type="file" accept="image/*" hidden>
+      <p class="muted small" id="mSaved"></p>
+    </div>
+  </div>
+</div>
+
+<div id="toasts"></div>
+
+<script>
+(function () {
+  'use strict';
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+  var apiMeta = document.querySelector('meta[name="api-base"]');
+  var API = (apiMeta && apiMeta.content ? apiMeta.content : location.pathname).replace(/\/?$/, '/');
+  var PLATFORMS = { tiktok: 'TikTok', instagram: 'Instagram', youtube: 'YouTube', facebook: 'Facebook', kwai: 'Kwai', pinterest: 'Pinterest', x: 'X', outro: 'Outro' };
+  var STATUS = { para_modelar: 'Para modelar', modelado: 'Modelado' };
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function store(key, val) { try { if (val == null) localStorage.removeItem(key); else localStorage.setItem(key, val); } catch (e) {} }
+  function read(key) { try { return localStorage.getItem(key); } catch (e) { return null; } }
+
+  var pin = read('modelar_pin') || '';
+  var view = read('modelar_view') || 'grid';
+  var videos = [];
+  var filter = { status: 'all', platform: 'all', q: '' };
+  var current = null;
+  var saveTimer = null;
+
+  // ---------- util ----------
+  function toast(msg, kind, ms) {
+    var t = document.createElement('div');
+    t.className = 'toast ' + (kind || 'info');
+    t.textContent = msg;
+    $('#toasts').appendChild(t);
+    requestAnimationFrame(function () { t.classList.add('show'); });
+    setTimeout(function () { t.classList.remove('show'); setTimeout(function () { t.remove(); }, 300); }, ms || 3500);
+  }
+
+  function api(path, opts) {
+    opts = opts || {};
+    var headers = { 'x-pin': pin };
+    var body = opts.body;
+    if (body && !(body instanceof FormData)) { headers['content-type'] = 'application/json'; body = JSON.stringify(body); }
+    return fetch(API + 'api/' + path, { method: opts.method || 'GET', headers: headers, body: body }).then(function (res) {
+      return res.text().then(function (txt) {
+        var data = null; try { data = JSON.parse(txt); } catch (e) {}
+        if (res.status === 401) { showAuth('login', (data && data.error) || 'PIN incorreto.'); throw new Error((data && data.error) || 'PIN incorreto.'); }
+        if (res.status === 409 && data && data.code === 'setup_required') { showAuth('setup'); throw new Error('Crie um PIN primeiro.'); }
+        if (!res.ok) throw new Error((data && data.error) || ('Erro ' + res.status));
+        return data;
+      });
+    });
+  }
+
+  function orientation(v) {
+    if (v.thumb_w && v.thumb_h) {
+      var r = v.thumb_w / v.thumb_h;
+      if (r > 1.2) return 'landscape';
+      if (r >= 0.85) return 'square';
+    }
+    return 'portrait';
+  }
+  window.__fixAspect = function (img) {
+    var box = img.parentNode;
+    if (!box || box.dataset.fixed === '1' || !img.naturalWidth) return;
+    var r = img.naturalWidth / img.naturalHeight;
+    box.classList.remove('landscape', 'square');
+    if (r > 1.2) box.classList.add('landscape'); else if (r >= 0.85) box.classList.add('square');
+  };
+  window.__imgFail = function (img) {
+    var box = img.parentNode; if (!box) return;
+    img.remove();
+    var ph = document.createElement('div'); ph.className = 'ph'; ph.innerHTML = '<span class="big">🎬</span><span>Capa indisponível</span>';
+    box.insertBefore(ph, box.firstChild);
+  };
+
+  function fmtDate(iso) {
+    try { var d = new Date(iso); return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }); } catch (e) { return ''; }
+  }
+  function platformLabel(p) { return PLATFORMS[p] || 'Outro'; }
+
+  // ---------- autenticação ----------
+  var authMode = 'login';
+  function showAuth(mode, message) {
+    authMode = mode;
+    $('#app').hidden = true;
+    $('#auth').hidden = false;
+    $('#pinConfirm').hidden = mode !== 'setup';
+    $('#authTitle').textContent = mode === 'setup' ? 'Crie um PIN' : 'Digite seu PIN';
+    $('#authText').textContent = mode === 'setup'
+      ? 'Escolha de 4 a 8 números. Ele protege seus vídeos e você só digita uma vez em cada aparelho.'
+      : 'Ele protege seus vídeos. Você só digita uma vez em cada aparelho.';
+    $('#authBtn').textContent = mode === 'setup' ? 'Criar PIN e entrar' : 'Entrar';
+    var err = $('#authError'); err.hidden = !message; err.textContent = message || '';
+    $('#pinInput').value = ''; $('#pinConfirm').value = '';
+    setTimeout(function () { $('#pinInput').focus(); }, 50);
+  }
+  function showApp() { $('#auth').hidden = true; $('#app').hidden = false; }
+
+  $('#authForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var p = $('#pinInput').value.trim();
+    var err = $('#authError');
+    if (!/^\d{4,8}$/.test(p)) { err.hidden = false; err.textContent = 'O PIN precisa ter de 4 a 8 números.'; return; }
+    if (authMode === 'setup' && p !== $('#pinConfirm').value.trim()) { err.hidden = false; err.textContent = 'Os dois PINs não são iguais.'; return; }
+    var btn = $('#authBtn'); btn.disabled = true;
+    var path = authMode === 'setup' ? 'setup' : 'login';
+    fetch(API + 'api/' + path, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ pin: p }) })
+      .then(function (res) { return res.json().then(function (d) { return { ok: res.ok, data: d }; }); })
+      .then(function (r) {
+        if (!r.ok) { err.hidden = false; err.textContent = (r.data && r.data.error) || 'Não foi possível entrar.'; return; }
+        pin = p; store('modelar_pin', pin);
+        return load().then(function () { showApp(); if (authMode === 'setup') toast('PIN criado. Bem-vindo!', 'ok'); });
+      })
+      .catch(function (e2) { err.hidden = false; err.textContent = e2.message || 'Erro de conexão.'; })
+      .then(function () { btn.disabled = false; });
+  });
+
+  $('#logout').addEventListener('click', function () {
+    if (!confirm('Sair neste aparelho? Você vai precisar digitar o PIN de novo.')) return;
+    pin = ''; store('modelar_pin', null); videos = []; showAuth('login');
+  });
+
+  // ---------- dados ----------
+  function load() {
+    return api('videos').then(function (d) { videos = d.videos || []; render(); });
+  }
+
+  function addUrls(raw) {
+    var parts = raw.split(/\s+/).filter(function (s) { return /\./.test(s); });
+    if (!parts.length) { toast('Cole um link válido.', 'warn'); return; }
+    parts.forEach(function (p) { addUrl(p); });
+  }
+
+  function addUrl(raw) {
+    var url = raw.trim();
+    if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+    var tmp = { id: 'tmp-' + Date.now() + Math.random().toString(36).slice(2), pending: true, url: url, platform: guessPlatform(url), title: 'Buscando capa…', created_at: new Date().toISOString(), status: 'para_modelar', tags: [] };
+    videos.unshift(tmp); render();
+    api('videos', { method: 'POST', body: { url: url } }).then(function (r) {
+      videos = videos.filter(function (v) { return v.id !== tmp.id; });
+      if (r.duplicate) {
+        toast('Esse vídeo já estava salvo.', 'warn');
+        videos = videos.filter(function (v) { return v.id !== r.video.id; });
+        videos.unshift(r.video);
+      } else {
+        videos.unshift(r.video);
+        if (r.previewError) toast('Salvei o link, mas não consegui pegar a capa. Abra o vídeo e use "Trocar capa".', 'warn', 6000);
+        else toast('Vídeo salvo!', 'ok', 1800);
+      }
+      render();
+    }).catch(function (e) {
+      videos = videos.filter(function (v) { return v.id !== tmp.id; });
+      render();
+      toast(e.message || 'Não foi possível salvar.', 'error', 5000);
+    });
+  }
+
+  function guessPlatform(url) {
+    var h = ''; try { h = new URL(url).hostname.toLowerCase(); } catch (e) { return 'outro'; }
+    if (/tiktok\.com$/.test(h)) return 'tiktok';
+    if (/youtube\.com$/.test(h) || h === 'youtu.be') return 'youtube';
+    if (/instagram\.com$/.test(h)) return 'instagram';
+    if (/facebook\.com$/.test(h) || h === 'fb.watch') return 'facebook';
+    if (/kwai/.test(h)) return 'kwai';
+    if (/pinterest\./.test(h) || h === 'pin.it') return 'pinterest';
+    if (h === 'x.com' || /twitter\.com$/.test(h)) return 'x';
+    return 'outro';
+  }
+
+  function patch(id, fields) {
+    return api('videos/' + id, { method: 'PATCH', body: fields }).then(function (r) {
+      videos = videos.map(function (v) { return v.id === id ? r.video : v; });
+      return r.video;
+    });
+  }
+
+  function toggleStatus(id) {
+    var v = videos.filter(function (x) { return x.id === id; })[0]; if (!v) return;
+    var next = v.status === 'modelado' ? 'para_modelar' : 'modelado';
+    v.status = next; render();
+    patch(id, { status: next }).then(function () { if (next === 'modelado') toast('Marcado como modelado ✅', 'ok', 1500); })
+      .catch(function (e) { toast(e.message, 'error'); load(); });
+  }
+
+  // ---------- render ----------
+  function filtered() {
+    var q = filter.q.trim().toLowerCase();
+    return videos.filter(function (v) {
+      if (filter.status !== 'all' && !v.pending && v.status !== filter.status) return false;
+      if (filter.platform !== 'all' && v.platform !== filter.platform) return false;
+      if (q) {
+        var hay = [v.title, v.author, v.notes, (v.tags || []).join(' '), v.url].join(' ').toLowerCase();
+        if (hay.indexOf(q) < 0) return false;
+      }
+      return true;
+    });
+  }
+
+  function render() {
+    renderChips();
+    var items = filtered();
+    var total = videos.filter(function (v) { return !v.pending; });
+    var pend = total.filter(function (v) { return v.status !== 'modelado'; }).length;
+    $('#count').textContent = total.length ? (total.length + (total.length === 1 ? ' vídeo' : ' vídeos') + ' · ' + pend + ' para modelar' + (items.length !== total.length ? ' · mostrando ' + items.length : '')) : '';
+    $('#empty').hidden = videos.length > 0;
+    $('#grid').hidden = view !== 'grid' || videos.length === 0;
+    $('#list').hidden = view !== 'list' || videos.length === 0;
+    $('#viewToggle').textContent = view === 'grid' ? '☰ Lista' : '▦ Galeria';
+    if (view === 'grid') $('#grid').innerHTML = items.map(cardHTML).join('') || '<p class="muted" style="grid-column:1/-1">Nada encontrado com esse filtro.</p>';
+    else $('#list').innerHTML = items.length ? ('<table><thead><tr><th></th><th>Título</th><th>Plataforma</th><th>Status</th><th>Adicionado</th></tr></thead><tbody>' + items.map(rowHTML).join('') + '</tbody></table>') : '<p class="muted">Nada encontrado com esse filtro.</p>';
+  }
+
+  function renderChips() {
+    var present = {};
+    videos.forEach(function (v) { present[v.platform || 'outro'] = true; });
+    var keys = Object.keys(PLATFORMS).filter(function (k) { return present[k]; });
+    if (filter.platform !== 'all' && !present[filter.platform]) filter.platform = 'all';
+    var html = '<button type="button" class="chip' + (filter.platform === 'all' ? ' active' : '') + '" data-platform="all">Todas</button>';
+    keys.forEach(function (k) { html += '<button type="button" class="chip' + (filter.platform === k ? ' active' : '') + '" data-platform="' + k + '">' + esc(PLATFORMS[k]) + '</button>'; });
+    $('#platformChips').innerHTML = keys.length > 1 ? html : '';
+  }
+
+  function thumbHTML(v, cls) {
+    if (v.pending) return '<div class="thumb skeleton"><div class="ph"><div class="spin"></div><span>Buscando capa…</span></div></div>';
+    var o = orientation(v);
+    var inner = v.thumb_url
+      ? '<img src="' + esc(v.thumb_url) + '" alt="" loading="lazy" onload="__fixAspect(this)" onerror="__imgFail(this)">'
+      : '<div class="ph"><span class="big">🎬</span><span>Sem capa</span></div>';
+    return '<div class="thumb ' + o + (cls ? ' ' + cls : '') + '" data-fixed="' + (v.thumb_w && v.thumb_h ? '1' : '0') + '">' + inner +
+      '<span class="badge ' + esc(v.platform) + '">' + esc(platformLabel(v.platform)) + '</span>' +
+      '<button type="button" class="pill ' + esc(v.status) + '" data-toggle="' + esc(v.id) + '" title="Clique para alternar">' + esc(STATUS[v.status] || v.status) + '</button></div>';
+  }
+
+  function cardHTML(v) {
+    var tags = (v.tags || []).slice(0, 4).map(function (t) { return '<span class="tag">' + esc(t) + '</span>'; }).join('');
+    return '<article class="card' + (v.pending ? ' pending' : '') + '" data-id="' + esc(v.id) + '">' + thumbHTML(v) +
+      '<div class="body"><h3 class="title">' + esc(v.title || 'Sem título') + '</h3>' +
+      (v.author ? '<p class="author">' + esc(v.author) + '</p>' : '') +
+      (v.notes ? '<p class="notes">' + esc(v.notes) + '</p>' : '') +
+      (tags ? '<div class="tags">' + tags + '</div>' : '') +
+      '</div></article>';
+  }
+
+  function rowHTML(v) {
+    var mini = v.pending ? '<div class="mini ph"><div class="spin"></div></div>' : (v.thumb_url ? '<img class="mini" src="' + esc(v.thumb_url) + '" alt="" loading="lazy">' : '<div class="mini ph">🎬</div>');
+    return '<tr class="row" data-id="' + esc(v.id) + '"><td>' + mini + '</td>' +
+      '<td><div class="t">' + esc(v.title || 'Sem título') + '</div>' + (v.author ? '<div class="a">' + esc(v.author) + '</div>' : '') + '</td>' +
+      '<td>' + esc(platformLabel(v.platform)) + '</td>' +
+      '<td>' + (v.pending ? '…' : '<button type="button" class="pill ' + esc(v.status) + '" data-toggle="' + esc(v.id) + '">' + esc(STATUS[v.status] || v.status) + '</button>') + '</td>' +
+      '<td class="a">' + esc(fmtDate(v.created_at)) + '</td></tr>';
+  }
+
+  // ---------- eventos ----------
+  $('#addForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var raw = $('#urlInput').value.trim(); if (!raw) return;
+    $('#urlInput').value = '';
+    addUrls(raw);
+  });
+  $('#urlInput').addEventListener('paste', function () {
+    setTimeout(function () { var f = $('#addForm'); if (f.requestSubmit) f.requestSubmit(); else f.dispatchEvent(new Event('submit', { cancelable: true })); }, 60);
+  });
+
+  $('#statusSeg').addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-status]'); if (!b) return;
+    filter.status = b.dataset.status;
+    $$('#statusSeg button').forEach(function (x) { x.classList.toggle('active', x === b); });
+    render();
+  });
+  $('#platformChips').addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-platform]'); if (!b) return;
+    filter.platform = b.dataset.platform; render();
+  });
+  $('#search').addEventListener('input', function (e) { filter.q = e.target.value; render(); });
+  $('#viewToggle').addEventListener('click', function () { view = view === 'grid' ? 'list' : 'grid'; store('modelar_view', view); render(); });
+
+  function onItemClick(e) {
+    var tog = e.target.closest('[data-toggle]');
+    if (tog) { e.stopPropagation(); toggleStatus(tog.dataset.toggle); return; }
+    var el = e.target.closest('[data-id]'); if (!el) return;
+    var v = videos.filter(function (x) { return x.id === el.dataset.id; })[0];
+    if (!v || v.pending) return;
+    openModal(v.id);
+  }
+  $('#grid').addEventListener('click', onItemClick);
+  $('#list').addEventListener('click', onItemClick);
+
+  // ---------- modal ----------
+  function openModal(id) {
+    var v = videos.filter(function (x) { return x.id === id; })[0]; if (!v) return;
+    current = id;
+    var m = $('#modal'); m.hidden = false;
+    $('#mPlatform').textContent = platformLabel(v.platform); $('#mPlatform').className = 'badge ' + v.platform;
+    $('#mThumb').innerHTML = v.thumb_url ? '<img src="' + esc(v.thumb_url) + '" alt="">' : '<div class="ph">🎬<br>Sem capa. Use "Atualizar capa" ou "Trocar capa".</div>';
+    $('#mTitle').value = v.title || '';
+    $('#mTags').value = (v.tags || []).join(', ');
+    $('#mNotes').value = v.notes || '';
+    $('#mOpen').href = v.final_url || v.url;
+    $('#mMeta').textContent = (v.author ? v.author + ' · ' : '') + 'salvo em ' + fmtDate(v.created_at) + ' · ' + (v.final_url || v.url);
+    $('#mSaved').textContent = '';
+    $$('#mStatus button').forEach(function (b) { b.classList.toggle('active', b.dataset.status === v.status); });
+    document.body.style.overflow = 'hidden';
+  }
+  function closeModal() { $('#modal').hidden = true; current = null; document.body.style.overflow = ''; clearTimeout(saveTimer); }
+  $$('#modal [data-close]').forEach(function (el) { el.addEventListener('click', closeModal); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('#modal').hidden) closeModal(); });
+
+  function scheduleSave() {
+    clearTimeout(saveTimer);
+    $('#mSaved').textContent = 'Salvando…';
+    saveTimer = setTimeout(saveNow, 600);
+  }
+  function saveNow() {
+    if (!current) return;
+    var id = current;
+    var tags = $('#mTags').value.split(',').map(function (t) { return t.trim(); }).filter(Boolean).slice(0, 20);
+    patch(id, { title: $('#mTitle').value.trim(), tags: tags, notes: $('#mNotes').value })
+      .then(function () { if (current === id) $('#mSaved').textContent = 'Salvo ✓'; render(); })
+      .catch(function (e) { $('#mSaved').textContent = 'Erro ao salvar: ' + e.message; });
+  }
+  ['#mTitle', '#mTags', '#mNotes'].forEach(function (s) { $(s).addEventListener('input', scheduleSave); });
+  $('#mStatus').addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-status]'); if (!b || !current) return;
+    $$('#mStatus button').forEach(function (x) { x.classList.toggle('active', x === b); });
+    patch(current, { status: b.dataset.status }).then(render).catch(function (e2) { toast(e2.message, 'error'); });
+  });
+  $('#mRefresh').addEventListener('click', function () {
+    if (!current) return; var id = current; var btn = $('#mRefresh'); btn.disabled = true; btn.textContent = 'Buscando…';
+    api('videos/' + id + '/refresh', { method: 'POST' }).then(function (r) {
+      videos = videos.map(function (v) { return v.id === id ? r.video : v; }); render();
+      if (current === id) openModal(id);
+      toast(r.previewError ? 'Não consegui pegar a capa desse vídeo.' : 'Capa atualizada!', r.previewError ? 'warn' : 'ok');
+    }).catch(function (e) { toast(e.message, 'error'); }).then(function () { btn.disabled = false; btn.textContent = 'Atualizar capa'; });
+  });
+  $('#mCoverFile').addEventListener('click', function () { $('#coverInput').click(); });
+  $('#coverInput').addEventListener('change', function () {
+    var f = this.files && this.files[0]; this.value = ''; if (!f || !current) return;
+    var id = current; var fd = new FormData(); fd.append('file', f);
+    toast('Enviando capa…', 'info', 2000);
+    api('videos/' + id + '/cover', { method: 'POST', body: fd }).then(function (r) {
+      videos = videos.map(function (v) { return v.id === id ? r.video : v; }); render(); if (current === id) openModal(id); toast('Capa trocada!', 'ok');
+    }).catch(function (e) { toast(e.message, 'error'); });
+  });
+  $('#mCoverUrl').addEventListener('click', function () {
+    if (!current) return; var id = current;
+    var u = prompt('Cole o link de uma imagem (jpg, png, webp):'); if (!u) return;
+    api('videos/' + id + '/cover', { method: 'POST', body: { imageUrl: u.trim() } }).then(function (r) {
+      videos = videos.map(function (v) { return v.id === id ? r.video : v; }); render(); if (current === id) openModal(id); toast('Capa trocada!', 'ok');
+    }).catch(function (e) { toast(e.message, 'error'); });
+  });
+  $('#mDelete').addEventListener('click', function () {
+    if (!current) return; var id = current;
+    if (!confirm('Excluir este vídeo da sua lista?')) return;
+    api('videos/' + id, { method: 'DELETE' }).then(function () {
+      videos = videos.filter(function (v) { return v.id !== id; }); closeModal(); render(); toast('Vídeo excluído.', 'ok', 1800);
+    }).catch(function (e) { toast(e.message, 'error'); });
+  });
+
+  // recarrega quando o app volta para frente (ex.: salvou pelo celular e abriu no PC)
+  document.addEventListener('visibilitychange', function () { if (!document.hidden && pin && !$('#app').hidden) load().catch(function () {}); });
+
+  // ---------- início ----------
+  function boot() {
+    fetch(API + 'api/status').then(function (r) { return r.json(); }).then(function (st) {
+      if (!st.setup) return showAuth('setup');
+      if (!pin) return showAuth('login');
+      return load().then(showApp).catch(function () { /* showAuth já chamado em 401 */ });
+    }).catch(function () { showAuth('login', 'Sem conexão com o servidor. Tente de novo.'); });
+  }
+  boot();
+})();
+</script>
+</body>
+</html>
