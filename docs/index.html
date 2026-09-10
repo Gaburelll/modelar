@@ -79,7 +79,7 @@ a{color:var(--accent-2)}
 .count{max-width:1200px;margin:0 auto;padding:0 16px 8px;font-size:13px;color:var(--muted)}
 
 /* ---------- galeria ---------- */
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;padding:0 16px 24px;max-width:1200px;margin:0 auto}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;padding:0 16px 24px;max-width:1200px;margin:0 auto;align-items:start}
 @media(min-width:640px){.grid{grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px}}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;cursor:pointer;display:flex;flex-direction:column;transition:transform .12s,border-color .12s}
 .card:hover{transform:translateY(-2px);border-color:#3a3f55}
@@ -139,8 +139,8 @@ a{color:var(--accent-2)}
 .sheet-head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--border)}
 .sheet-head .badge{position:static}
 .sheet-body{overflow:auto;padding:14px;display:flex;flex-direction:column;gap:12px}
-.sheet-thumb{width:100%;max-height:46vh;display:flex;justify-content:center;background:var(--surface-2);border-radius:12px;overflow:hidden}
-.sheet-thumb img{max-height:46vh;max-width:100%;object-fit:contain;display:block}
+.sheet-thumb{flex:none;width:100%;height:40vh;min-height:160px;display:flex;justify-content:center;align-items:center;background:var(--surface-2);border-radius:12px;overflow:hidden}
+.sheet-thumb img{height:100%;max-width:100%;object-fit:contain;display:block}
 .sheet-thumb .ph{padding:40px;color:var(--muted);text-align:center}
 .sheet label{display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--muted)}
 .sheet input[type=text],.sheet textarea{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:15px;color:var(--text);outline:none;width:100%;resize:vertical}
