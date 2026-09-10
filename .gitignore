@@ -1,3 +1,8 @@
 .deploy-token
 node_modules
 .vercel
+
+.vercel
+.env*
+.env.local
+.env*.local
