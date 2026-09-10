@@ -113,6 +113,22 @@ async function fetchJson(url: string, headers: Record<string, string> = {}) {
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return await res.json();
 }
+// Facebook só entrega a página completa (com og:image) para o robô do próprio Facebook
+function isFacebookHost(h: string): boolean {
+  return /(^|\.)facebook\.com$/.test(h) || h === "fb.watch" || /(^|\.)fb\.com$/.test(h);
+}
+function uaFor(url: string): string {
+  try { if (isFacebookHost(new URL(url).hostname.toLowerCase())) return FB_UA; } catch { /* ignore */ }
+  return UA;
+}
+// Títulos que são página de erro/login, não o vídeo
+const JUNK_TITLES = /^(error|erro|facebook|instagram|tiktok|youtube|log ?in|login|entrar|just a moment\.*|attention required!?|access denied|page not found|not found|página não encontrada|conteúdo indisponível|content unavailable|untitled|sem título)$/i;
+function isJunkTitle(t?: string | null): boolean {
+  if (!t) return true;
+  const s = t.replace(/\s+/g, " ").trim();
+  return s.length < 2 || JUNK_TITLES.test(s) || /^(log ?in|entrar|faça login|iniciar sessão)\b/i.test(s);
+}
+
 async function resolveRedirects(url: string): Promise<string> {
   let current = url;
   for (let i = 0; i < 6; i++) {
@@ -121,7 +137,7 @@ async function resolveRedirects(url: string): Promise<string> {
       res = await fetch(current, {
         method: "GET",
         redirect: "manual",
-        headers: { "user-agent": UA, accept: "text/html,*/*;q=0.8", "accept-language": "pt-BR,pt;q=0.9,en;q=0.8" },
+        headers: { "user-agent": uaFor(current), accept: "text/html,*/*;q=0.8", "accept-language": "pt-BR,pt;q=0.9,en;q=0.8" },
         signal: withTimeout(12000),
       });
     } catch {
@@ -230,8 +246,21 @@ async function previewInstagram(u: URL, p: Preview) {
   }
 }
 
+async function previewFacebook(u: URL, p: Preview) {
+  const r = await fetchText(p.finalUrl || u.toString(), { "user-agent": FB_UA });
+  const h = r.text;
+  p.imageUrl = metaContent(h, ["og:image:secure_url", "og:image"]);
+  let t = metaContent(h, ["og:title"]) ?? "";
+  // "1,4 mi visualizações · 35 mil reações | legenda" -> "legenda"
+  if (/^[^|]{0,90}(visualiza|views|rea[çc]|reactions|coment|·)[^|]{0,60}\|/i.test(t)) t = t.replace(/^[^|]*\|\s*/, "");
+  if (t && !isJunkTitle(t)) p.title = t.replace(/\s+/g, " ").trim().slice(0, 140);
+  const owner = h.match(/"owning_profile":\{[^{}]*?"name":"([^"]{1,80})"/) || h.match(/"page_name":"([^"]{1,80})"/) ||
+    h.match(/"author_name":"([^"]{1,80})"/) || h.match(/"owner":\{[^{}]*?"name":"([^"]{1,80})"/);
+  if (owner) p.author = decodeEntities(owner[1].replace(/\\u([0-9a-f]{4})/gi, (_, x) => String.fromCharCode(parseInt(x, 16))).replace(/\\\//g, "/"));
+}
+
 async function previewGeneric(u: URL, p: Preview) {
-  const r = await fetchText(p.finalUrl || u.toString());
+  const r = await fetchText(p.finalUrl || u.toString(), { "user-agent": uaFor(p.finalUrl || u.toString()) });
   const h = r.text;
   if (!p.imageUrl) p.imageUrl = metaContent(h, ["og:image:secure_url", "og:image", "twitter:image", "twitter:image:src"]);
   if (!p.title) {
@@ -253,14 +282,21 @@ async function buildPreview(input: string): Promise<Preview> {
     if (platform === "youtube") await previewYouTube(u, p);
     else if (platform === "tiktok") await previewTikTok(u, p);
     else if (platform === "instagram") await previewInstagram(u, p);
+    else if (platform === "facebook") await previewFacebook(u, p);
   } catch (e) {
     console.warn("preview", platform, String(e));
   }
   if (!p.imageUrl) {
     try { await previewGeneric(u, p); } catch (e) { console.warn("preview generic", String(e)); }
   }
-  if (!p.title) p.title = platform === "outro" ? `Vídeo de ${u.hostname.replace(/^www\./, "")}` : `Vídeo do ${PLATFORM_LABEL[platform]}`;
+  if (isJunkTitle(p.title)) p.title = defaultTitle(u, platform);
   return p;
+}
+function defaultTitle(u: URL, platform: string): string {
+  return platform === "outro" ? `Vídeo de ${u.hostname.replace(/^www\./, "")}` : `Vídeo do ${PLATFORM_LABEL[platform]}`;
+}
+function isDefaultTitle(t?: string | null): boolean {
+  return !t || isJunkTitle(t) || /^Vídeo d[oe] /.test(t);
 }
 
 // ---------- imagens ----------
@@ -479,7 +515,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
             try { thumb = await storeImageFromUrl(id, p.imageUrl, p.referer); } catch (e) { previewError = String((e as Error)?.message ?? e); }
           } else previewError = "capa não encontrada";
           const upd: Record<string, unknown> = { platform: p.platform, final_url: p.finalUrl };
-          if (!video.title && p.title) upd.title = p.title;
+          if (isDefaultTitle(video.title) && p.title && !isDefaultTitle(p.title)) upd.title = p.title;
           if (!video.author && p.author) upd.author = p.author;
           if (thumb) { upd.thumb_url = thumb.url; upd.thumb_path = thumb.path; upd.thumb_w = thumb.w ?? p.w ?? null; upd.thumb_h = thumb.h ?? p.h ?? null; }
           const { data, error } = await sb.from("modelar_videos").update(upd).eq("id", id).select().single();

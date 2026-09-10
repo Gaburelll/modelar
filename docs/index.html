@@ -368,7 +368,23 @@ a{color:var(--accent-2)}
 
   // ---------- dados ----------
   function load() {
-    return api('videos').then(function (d) { videos = d.videos || []; render(); });
+    return api('videos').then(function (d) { videos = d.videos || []; render(); retryMissingCovers(); });
+  }
+
+  // Vídeos salvos sem capa: tenta buscar de novo (uma vez por vídeo a cada abertura do site)
+  var retried = {};
+  function retryMissingCovers() {
+    var missing = videos.filter(function (v) { return !v.pending && !v.thumb_url && !retried[v.id]; }).slice(0, 3);
+    if (!missing.length) return;
+    var chain = Promise.resolve();
+    missing.forEach(function (v) {
+      retried[v.id] = true;
+      chain = chain.then(function () {
+        return api('videos/' + v.id + '/refresh', { method: 'POST' }).then(function (r) {
+          if (r && r.video) { videos = videos.map(function (x) { return x.id === v.id ? r.video : x; }); render(); }
+        }).catch(function () {});
+      });
+    });
   }
 
   function addUrls(raw) {
